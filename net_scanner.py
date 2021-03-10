@@ -1,4 +1,5 @@
 import argparse
+from numpy import save
 import scapy.all as scapy
 import os
 import pandas as pd 
@@ -84,6 +85,15 @@ def print_results_netscan(results, verbose = False):
         for element in unans:
             print(element.summary)
 
+def save_file(data):
+    
+    args = get_args()
+    
+    cwd = os.getcwd()
+    df = pd.DataFrame(data)
+    df.to_csv(args.fout, index = False)
+    print(f'Results has been save under the following directory {cwd}')
+
 def main():
     
     args = get_args()
@@ -100,10 +110,7 @@ def main():
             print_results_netscan(results, verbose = True)
             
         if args.fout:
-                cwd = os.getcwd()
-                df = pd.DataFrame(res_dict)
-                df.to_csv(args.fout, index = False)
-                print(f'Results has been save under the following directory {cwd}')      
+            save_file(res_dict) 
 
     
     if args.getheader:
@@ -113,10 +120,8 @@ def main():
                 print(element)
                 
             if args.fout:
-                cwd = os.getcwd()
-                df = pd.DataFrame(header)
-                df.to_csv(args.fout, index = False)
-                print(f'Results has been save under the following directory {cwd}')
+                save_file(header)
+                
 
         
                 
