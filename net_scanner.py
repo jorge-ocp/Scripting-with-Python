@@ -2,6 +2,7 @@ import argparse
 import scapy.all as scapy
 import os
 import pandas as pd 
+import requests
 
 
 def get_args():
@@ -11,15 +12,31 @@ def get_args():
                                      description= "A Network Scanner based on ARP protocol by Jorge Corral",
                                      epilog= "Remember be careful with sensitive information")
     
-    parser.add_argument('-t', '--target', required=True, help= 'Provide IPv4 net range')
+    parser.add_argument('-t', '--target', help= 'Provide IPv4 net range')
     parser.add_argument('-v', '--verbose', help= 'Turn on verbose mode',
                         action= 'store_true')
     parser.add_argument('-o', dest='fout', help= 'Save program output to a file')
+    parser.add_argument('-g', dest='getheader', help= 'Get the header of the website')
     
     args = parser.parse_args()
     
     return args
 
+def get_header(website):
+    
+    res = []
+    
+    try:
+        url = requests.get(url= website)
+        header = dict(url.headers)
+        for element in header:
+            res.append(element + " : " + header[element])
+        
+        return res
+        
+    
+    except:
+        print(f'Website {website} unreachable')
 
 def net_scan(net):
     
@@ -45,12 +62,12 @@ def net_scan(net):
         
         
     res_dict['IP_ADDRESS'] = ips
-    res_dict['MACADDRESS'] = macs
+    res_dict['MAC_ADDRESS'] = macs
     
     
     return ans, unans, res_dict
     
-def print_results(results, verbose = False):
+def print_results_netscan(results, verbose = False):
     
     ans = results[0]
     unans = results[1]
@@ -70,20 +87,43 @@ def print_results(results, verbose = False):
 def main():
     
     args = get_args()
-    results = net_scan(args.target)
-    res_dict = results[2]
     
-    if args.verbose:
-        print_results(results, verbose= True)
     
-    else:
-        print_results(results)
+    if args.target:
+        results = net_scan(args.target)
+        res_dict = results[2]
+        
+        if args.verbose == False:
+            print_results_netscan(results)
+        
+        else:
+            print_results_netscan(results, verbose = True)
+            
+        if args.fout:
+                cwd = os.getcwd()
+                df = pd.DataFrame(res_dict)
+                df.to_csv(args.fout, index = False)
+                print(f'Results has been save under the following directory {cwd}')      
+
     
-    if args.fout:
-        cwd = os.getcwd()
-        df = pd.DataFrame(res_dict)
-        df.to_csv(args.fout, index=False)
-        print(f'Results have been save under the following directory {cwd}')
+    if args.getheader:
+        header = get_header(args.getheader)
+        try:
+            for element in header:
+                print(element)
+                
+            if args.fout:
+                cwd = os.getcwd()
+                df = pd.DataFrame(header)
+                df.to_csv(args.fout, index = False)
+                print(f'Results has been save under the following directory {cwd}')
+
+        
+                
+        except:
+            print('Can not connect, check the argument or conexion')
+    
+    
         
 
 if __name__ == "__main__":
